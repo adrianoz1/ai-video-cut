@@ -1,2 +1,3 @@
 .env
 video_processing_*
+.DS_Store
