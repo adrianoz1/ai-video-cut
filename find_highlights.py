@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
 
 # Constantes
 OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
-OPENAI_MODEL = "gpt-4o-mini"
-OPENAI_TEMPERATURE = 0.4
+OPENAI_MODEL = "gpt-5-mini"
+OPENAI_TEMPERATURE = 1
 PREVIEW_REASON_LENGTH = 60
 
 
@@ -87,62 +87,50 @@ def _build_prompt(transcript_text: str) -> str:
     Returns:
         String com o prompt completo.
     """
-    return f"""You are a specialist in editing viral short-form videos for TikTok, Reels, and YouTube Shorts.
+    prompt_template = """Você é um especialista em análise de conteúdo e edição de vídeos.
 
-Your task is to analyze the transcript provided by the user and identify the segments with the highest potential for retention, sharing, and comments. The selected segments must function as fully independent videos.
+Sua tarefa é analisar uma transcrição completa de vídeo (em português) com timestamps e extrair apenas os melhores trechos com potencial de retenção, clareza e valor narrativo.
 
-Selection criteria (mandatory):
+OBJETIVO:
+Selecionar segmentos que façam sentido isoladamente, que tenham começo, desenvolvimento e conclusão claros, e que possam ser assistidos fora do contexto completo sem parecerem cortados.
 
-Each segment must:
-- Have a strong hook within the first 3–5 seconds (impactful statement, strong opinion, provocative question, or expectation break).
-- Contain a complete idea with clear beginning, development, and explicit conclusion.
-- Not depend on previous or external context.
-- Include at least one of the following elements: strong emotion, controversy, surprise, revelation, bold opinion, impactful statement, or a short story with a clear takeaway.
+REGRAS IMPORTANTES:
 
-Start and end rules (mandatory):
+1. Nunca corte frases no meio.
+2. Nunca termine um trecho com frase incompleta ou pensamento interrompido.
+3. O trecho precisa ter contexto suficiente para ser entendido sozinho.
+4. Evite incluir partes confusas, repetições, erros de fala excessivos ou trechos muito técnicos sem explicação.
+5. Prefira momentos que tenham:
+   - Opiniões fortes
+   - Explicações claras
+   - Analogias
+   - Momentos engraçados
+   - Conselhos sobre carreira
+   - Comparações
+   - Perguntas provocativas seguidas de resposta
+6. Cada trecho deve ter no mínimo 20 segundos e no máximo 90 segundos.
+7. Não sobreponha trechos (não repetir intervalos de tempo).
+8. Use os timestamps reais fornecidos na transcrição.
+9. O campo "transcript" deve conter exatamente o texto falado dentro daquele intervalo selecionado (sem resumir, sem alterar, sem reescrever).
+10. O campo "reason" deve explicar por que esse trecho é forte, considerando retenção, clareza, impacto emocional ou valor educacional.
 
-- The segment must begin at the start of a complete sentence.
-- The segment must end only after the full conclusion of a thought.
-- The last second must contain a complete declarative sentence.
-- The segment must not end with unfinished connectors (e.g., because, but, so, therefore, however, and, etc.), incomplete ideas, promises of continuation, or sentences that depend on what comes next.
-
-If a segment reaches 30 seconds but the idea is not fully concluded, expand the segment until the thought is fully completed, respecting the maximum limit of 120 seconds.
-
-If it is not possible to fully conclude the idea before reaching 120 seconds, discard the segment.
-
-Technical rules (mandatory):
-
-- Return between 3 and 6 segments.
-- Each segment must contain:
-  - start (in seconds)
-  - end (in seconds)
-  - reason (objective explanation of the viral potential)
-- Duration must be calculated as: duration = end - start.
-- All segments must strictly satisfy: 30 ≤ (end - start) ≤ 120.
-- Do not return any segment shorter than 30 seconds.
-- Do not return any segment longer than 120 seconds.
-- Timestamps must strictly respect the transcript boundaries.
-
-Final validation before responding:
-
-For each segment, internally confirm that:
-- It works as a standalone video.
-- The ending delivers a clear sense of closure.
-- The viewer would not feel that something is missing.
-- The hook appears immediately at the beginning.
-
-Return ONLY valid JSON in the following format:
+FORMATO DE SAÍDA (JSON válido):
 
 [
-  {{
-    "start": 12,
-    "end": 68,
-    "reason": "Strong opening hook and bold opinion followed by a complete narrative arc with a clear conclusion."
-  }}
+  {
+    "start": número_em_segundos,
+    "end": número_em_segundos,
+    "transcript": "Texto do segmento...",
+    "reason": "Explicação estratégica do porquê esse trecho é forte."
+  }
 ]
 
-transcript: 
-{transcript_text}"""
+Retorne apenas o JSON. Não escreva explicações fora do JSON.
+
+texto: 
+"""
+    # Concatenar transcript por último para evitar que chaves no texto quebrem a f-string
+    return prompt_template + transcript_text
 
 
 def _extract_json_from_response(content: str) -> str:
@@ -189,7 +177,7 @@ def _call_openai_api(api_key: str, prompt: str) -> str:
     data = {
         "model": OPENAI_MODEL,
         "messages": [
-            {"role": "user", "content": prompt}
+            {"role": "user",  "content": prompt}
         ],
         "temperature": OPENAI_TEMPERATURE
     }
