@@ -7,7 +7,8 @@
 # para formato vertical, e finalmente gera clips dos highlights.
 #
 # Uso:
-#   ./process_video.sh <youtube_url> [openai_api_key]
+#   ./process_video.sh <youtube_url> [openai_api_key]   # fluxo completo
+#   ./process_video.sh --download-only <youtube_url> [output_dir]   # apenas download
 #
 # Ou defina OPENAI_API_KEY como variável de ambiente.
 
@@ -49,10 +50,25 @@ print_header() {
     echo ""
 }
 
-# Verificar argumentos
+# Diretório do script (precisa vir antes do --download-only)
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Modo --download-only: executa apenas o download e sai
+if [ "${1:-}" = "--download-only" ]; then
+    shift
+    if [ $# -lt 1 ]; then
+        print_error "URL do YouTube não fornecida"
+        echo "Uso: $SCRIPT_NAME --download-only <youtube_url> [output_dir]"
+        exit 1
+    fi
+    exec "$SCRIPT_DIR/download_video.sh" "$@"
+fi
+
+# Verificar argumentos (fluxo completo)
 if [ $# -lt 1 ]; then
     print_error "URL do YouTube não fornecida"
     echo "Uso: $SCRIPT_NAME <youtube_url> [openai_api_key]"
+    echo "     $SCRIPT_NAME --download-only <youtube_url> [output_dir]"
     echo ""
     echo "Ou defina OPENAI_API_KEY como variável de ambiente"
     exit 1
@@ -66,9 +82,6 @@ if [ -z "$OPENAI_API_KEY" ]; then
     echo "Defina como segundo argumento ou variável de ambiente"
     exit 1
 fi
-
-# Diretório do script
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly WORK_DIR="${SCRIPT_DIR}/video_processing_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$WORK_DIR"
 
@@ -112,19 +125,21 @@ run_step() {
     fi
 }
 
-# 1️⃣ Baixar vídeo
-cd "$WORK_DIR"
-run_step "1" "📥 Baixando vídeo do YouTube" \
-    "yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best' -o 'video.%(ext)s' '$YOUTUBE_URL'"
+# 1️⃣ Baixar vídeo (usa script standalone, mantido no fluxo)
+print_info "[1/7] 📥 Baixando vídeo do YouTube"
+if ! "$SCRIPT_DIR/download_video.sh" "$YOUTUBE_URL" "$WORK_DIR"; then
+    print_error "Download do vídeo falhou"
+    exit 1
+fi
+echo ""
 
+cd "$WORK_DIR"
 VIDEO_FILE=$(find . -maxdepth 1 -name 'video.*' -type f | head -1)
 if [ -z "$VIDEO_FILE" ]; then
     print_error "Vídeo não foi baixado"
     exit 1
 fi
 VIDEO_FILE=$(basename "$VIDEO_FILE")
-print_success "✅ Vídeo baixado: $VIDEO_FILE"
-echo ""
 
 # 2️⃣ Extrair áudio
 run_step "2" "🎵 Extraindo áudio do vídeo" \
