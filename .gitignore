@@ -1,5 +1,6 @@
 .env
 video_processing_*
+youtube_transcription_*
 .DS_Store
 proxies.txt
 cookies.txt
