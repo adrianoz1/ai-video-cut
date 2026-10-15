@@ -124,6 +124,14 @@ chmod +x process_video.sh
   "sk-proj-xxxxxxxxxxxxxxxxxxxxx"
 ```
 
+### Transcrever um Reel do Instagram
+
+Baixa o Reel, extrai o áudio e devolve o roteiro falado em `roteiro.txt`. Os timestamps ficam em `transcript.json`.
+
+O Instagram exige sessão logada. Use `cookies.txt` na raiz do projeto ou deixe o Chrome logado (ou outro navegador via `YT_DLP_COOKIES_BROWSER`).
+
+```bash
+./transcribe_reel.sh "https://www.instagram.com/reel/CODIGO/"
 ### Transcrever um vídeo do YouTube
 
 Baixa o áudio e devolve o roteiro falado em `roteiro.txt`. Os timestamps ficam em `transcript.json`.
@@ -167,6 +175,7 @@ python3 generate_clips.py video_with_subs.mp4 highlights.json ./clips
 ```
 videocut/
 ├── process_video.sh      # Script principal (orquestra todo o processo)
+├── transcribe_reel.sh    # Transcreve o roteiro de um Reel do Instagram
 ├── transcribe_youtube.sh # Transcreve o roteiro de um vídeo do YouTube
 ├── generate_srt.py       # Gera arquivo SRT a partir da transcrição
 ├── find_highlights.py    # Identifica highlights usando GPT
