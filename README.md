@@ -132,6 +132,14 @@ O Instagram exige sessão logada. Use `cookies.txt` na raiz do projeto ou deixe 
 
 ```bash
 ./transcribe_reel.sh "https://www.instagram.com/reel/CODIGO/"
+### Transcrever um vídeo do YouTube
+
+Baixa o áudio e devolve o roteiro falado em `roteiro.txt`. Os timestamps ficam em `transcript.json`.
+
+Aceita link de watch, `youtu.be` e Shorts. Vídeos longos são divididos em partes de 10 minutos para caber no limite de 25 MB da Whisper API.
+
+```bash
+./transcribe_youtube.sh "https://www.youtube.com/watch?v=VIDEO_ID"
 ```
 
 ### Usando Scripts Individuais
@@ -168,6 +176,7 @@ python3 generate_clips.py video_with_subs.mp4 highlights.json ./clips
 videocut/
 ├── process_video.sh      # Script principal (orquestra todo o processo)
 ├── transcribe_reel.sh    # Transcreve o roteiro de um Reel do Instagram
+├── transcribe_youtube.sh # Transcreve o roteiro de um vídeo do YouTube
 ├── generate_srt.py       # Gera arquivo SRT a partir da transcrição
 ├── find_highlights.py    # Identifica highlights usando GPT
 ├── add_subtitles.py      # Adiciona legendas e converte para vertical
